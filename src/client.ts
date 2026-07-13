@@ -35,6 +35,8 @@ async function main(): Promise<void> {
     },
   });
 
+  
+
   console.log("\nTool result:");
   console.dir(result, {
     depth: null,
