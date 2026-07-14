@@ -1,23 +1,48 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { registerTimeTool } from "./tools/time.tool.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio";
+import "dotenv/config";
 
-const server = new McpServer({
-    name:"time-server",
-    version:"1.0.0."
-})
+import * as readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 
-registerTimeTool(server)
+import { OpenAIProvider } from "./llm/llm.client.js";
 
 async function main(): Promise<void> {
-    const transport = new StdioServerTransport;
-  
-    await server.connect(transport);
-  
-    console.error("Time MCP Server running over stdio");
-  }
-  
-  main().catch((error: unknown) => {
-    console.error("Fatal MCP Server error:", error);
-    process.exit(1);
+  const rl = readline.createInterface({
+    input,
+    output,
   });
+
+  const llm = new OpenAIProvider();
+
+  console.log("AI Assistant started");
+  console.log('Type "exit" to quit\n');
+
+  while (true) {
+    const userInput = await rl.question("You: ");
+
+    if (userInput.trim().toLowerCase() === "exit") {
+      break;
+    }
+
+    if (!userInput.trim()) {
+      continue;
+    }
+
+    const response = await llm.chat({
+      messages: [
+        {
+          role: "user",
+          content: userInput,
+        },
+      ],
+    });
+
+    console.log(`AI: ${response.content}\n`);
+  }
+
+  rl.close();
+}
+
+main().catch((error: unknown) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
